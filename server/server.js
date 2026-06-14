@@ -1,16 +1,15 @@
 import express from "express"; 
-import dotenv, { config } from "dotenv";
+import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import {connectDB} from "./config/db.js";
+import { connectDB } from "./config/db.js";
 import userRouter from "./routes/userRoutes.js";
-import complaintRouter from "./routes/complaintRoutes.js";
+import complaintRouter from "./routes/complaintRouter.js"; // Note: Make sure file name matches exactly
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 
 dotenv.config();
 
@@ -22,7 +21,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 
-// CORS — in dev mode allow all localhost origins
+// CORS — Handles both local testing and production Vercel URLs
 const corsOptions = {
   credentials: true,
   origin: isDev
@@ -34,15 +33,12 @@ app.use(cors(corsOptions));
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-
 app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
 app.use("/api/auth", userRouter);
-app.use("/api/complaint", complaintRouter)
-
-
+app.use("/api/complaint", complaintRouter);
 
 // Dev-mode error handler — sends stack traces to client
 if (isDev) {
@@ -55,11 +51,18 @@ if (isDev) {
   });
 }
 
-await connectDB();
-app.listen(PORT, () => {
-  console.log(`\x1b[32m✔ Server running on PORT: ${PORT} [${process.env.NODE_ENV || 'development'} mode]\x1b[0m`);
-  if (isDev) {
+// 🌟 CRITICAL VERCEL SETUP CHANGE HERE:
+// Connect to database dynamically 
+connectDB().catch(err => console.error("DB Connection Error:", err));
+
+// Only spin up the local listener if we aren't in production deployment
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\x1b[32m✔ Server running on PORT: ${PORT} [development mode]\x1b[0m`);
     console.log(`\x1b[36m  → API:     http://localhost:${PORT}/api`);
     console.log(`  → Client:  http://localhost:5173\x1b[0m`);
-  }
-});
+  });
+}
+
+// Export the app instance for Vercel Serverless execution
+export default app;
