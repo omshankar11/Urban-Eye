@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./config/db.js";
-import userRouter from "./routes/userRoutes.js";
-import complaintRouter from "./routes/complaintRouter.js"; // Note: Make sure file name matches exactly
+import userRouter from "./routes/userRoutes.js"; // 👈 FIXED: Added this missing import back!
+import complaintRouter from "./routes/complaintRoutes.js"; 
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -51,7 +51,6 @@ if (isDev) {
   });
 }
 
-// 🌟 CRITICAL VERCEL SETUP CHANGE HERE:
 // Connect to database dynamically 
 connectDB().catch(err => console.error("DB Connection Error:", err));
 
